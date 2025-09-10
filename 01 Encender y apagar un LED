@@ -1,0 +1,58 @@
+// =================================================================
+// Iwan
+// 01: Encender y apagar un LED
+// Aprendizaje: Usar funciones básicas para controlar pines de salida
+// Pines usados: LED D1 (blanco) en el GPIO2
+//
+// Conexión de hardware:
+// Conecta un cable jumper desde el header D1 al pin GPIO2 del ESP32.
+//
+// Descripción:
+// Este programa enciende y apaga un solo LED, el LED D1,
+// que está integrado en la placa de expansión del ESP32.
+// El programa usa las funciones pinMode() y digitalWrite()
+// para crear un efecto de parpadeo.
+// =================================================================
+
+const int ledPin = 2; // Esta variable almacena el número del pin para el LED D1.
+                      // Es más fácil de entender que usar el número 2 directamente en el código.
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta función se ejecuta una sola vez cuando el ESP32 se enciende o se reinicia.
+void setup() {
+  // Inicializamos la comunicación serial a 115200 baudios.
+  // Esto nos permite enviar mensajes a la computadora para ver lo que está pasando.
+  Serial.begin(115200);
+
+  // Configuramos el pin del LED como una SALIDA.
+  // Esta línea es crucial; le dice al ESP32 que vamos a usar este pin para
+  // enviar una señal eléctrica y controlar el LED.
+  pinMode(ledPin, OUTPUT);
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta función se ejecuta de forma repetida e infinita después de que setup() termina.
+void loop() {
+  // === Encender el LED ===
+  // Escribimos un valor digital en el pin del LED.
+  // HIGH (o 1) envía un voltaje para encender el componente.
+  digitalWrite(ledPin, HIGH);
+  Serial.println("LED D1 Encendido.");
+
+  // Pausamos el programa por 2000 milisegundos (2 segundos).
+  // Durante este tiempo, el LED permanecerá encendido.
+  delay(2000);
+
+  // === Apagar el LED ===
+  // Escribimos un valor bajo en el pin del LED.
+  // LOW (o 0) corta el voltaje y apaga el componente.
+  digitalWrite(ledPin, LOW);
+  Serial.println("LED D1 Apagado.");
+
+  // Esperamos 2 segundos más antes de volver al inicio del loop().
+  delay(2000);
+}
