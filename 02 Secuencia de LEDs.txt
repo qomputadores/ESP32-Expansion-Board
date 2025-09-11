@@ -1,0 +1,72 @@
+// =================================================================
+// Iwan
+// 02: Secuencia de LEDs
+// Aprendizaje: Usar arrays y bucles para controlar múltiples componentes
+// Pines usados: LEDs rojos D1-D8
+//
+// Conexión de hardware:
+// Conecta cables jumper desde los headers D1 a D8 a sus respectivos pines GPIO.
+// Para un cableado más limpio, se han organizado los pines para que estén juntos
+// en un solo lado de la placa ESP32.
+// D1: GPIO27
+// D2: GPIO26
+// D3: GPIO25
+// D4: GPIO33
+// D5: GPIO32
+// D6: GPIO14
+// D7: GPIO12
+// D8: GPIO13
+//
+// Descripción:
+// Este programa crea una secuencia de luces que se mueven de un lado a otro
+// sobre los 8 LEDs rojos. Es un ejemplo de cómo controlar un grupo de LEDs
+// con un bucle, lo que hace el código mucho más eficiente.
+// =================================================================
+
+// Creamos un array para almacenar los números de los pines de los LEDs.
+// El orden de los pines en el array define el orden de la secuencia.
+const int ledPins[] = {27, 26, 25, 33, 32, 14, 12, 13};
+const int numLeds = sizeof(ledPins) / sizeof(ledPins[0]); // Calcula el número total de LEDs en el array.
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta función se ejecuta una sola vez al encender la placa.
+void setup() {
+  // Inicializamos la comunicación serial a 115200 baudios.
+  Serial.begin(115200);
+  Serial.println("Programa 02: Iniciando secuencia.");
+
+  // Usamos un bucle for para configurar todos los pines de los LEDs como SALIDAS.
+  for (int i = 0; i < numLeds; i++) {
+    pinMode(ledPins[i], OUTPUT);
+  }
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta función se ejecuta de forma continua.
+void loop() {
+  // === Secuencia de izquierda a derecha ===
+  for (int i = 0; i < numLeds; i++) {
+    digitalWrite(ledPins[i], HIGH);   // Enciende el LED actual.
+    Serial.print("LED D");
+    Serial.print(i + 1);
+    Serial.println(" encendido.");
+    delay(100);                       // Espera 100 milisegundos.
+    digitalWrite(ledPins[i], LOW);    // Apaga el LED actual.
+  }
+
+  // === Secuencia de derecha a izquierda ===
+  // Comenzamos desde el segundo LED de la derecha para evitar parpadear
+  // el mismo LED dos veces seguidas.
+  for (int i = numLeds - 2; i > 0; i--) {
+    digitalWrite(ledPins[i], HIGH);   // Enciende el LED actual.
+    Serial.print("LED D");
+    Serial.print(i + 1);
+    Serial.println(" encendido.");
+    delay(100);                       // Espera 100 milisegundos.
+    digitalWrite(ledPins[i], LOW);    // Apaga el LED actual.
+  }
+}
