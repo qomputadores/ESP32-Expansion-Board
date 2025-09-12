@@ -1,0 +1,97 @@
+// =================================================================
+// Iwan
+// 04: Control de salidas con pulsadores
+// Aprendizaje: Usar arrays y pines con resistencias internas para controlar entradas
+// Pines usados:
+//   - Pulsadores: KEY1 (GPIO27), KEY2 (GPIO26), KEY3 (GPIO12), KEY4 (GPIO33)
+//   - LEDs: D1 (GPIO2)
+//   - Buzzer: GPIO25
+//
+// Conexión de hardware:
+//   - Conecta cables jumper desde los headers de los pulsadores (K1 a K4)
+//     a los siguientes pines GPIO del ESP32. Estos pines son confiables para la entrada.
+//     - K1 a GPIO27
+//     - K2 a GPIO26
+//     - K3 a GPIO12
+//     - K4 a GPIO33
+//   - Conecta el header del buzzer (Beep) a su pin GPIO25.
+//   - Conecta el header del LEDs (D1) a su pin GPIO2.
+//
+// Descripción:
+// Este programa lee el estado de cuatro pulsadores para controlar un LED y el buzzer.
+// El código utiliza pines con resistencias pull-up internas para evitar
+// el rebote y el bucle de lecturas erróneas.
+// =================================================================
+
+// Creamos un array para almacenar los números de los pines de los pulsadores.
+const int keyPins[] = {27, 26, 12, 33};
+const int numKeys = sizeof(keyPins) / sizeof(keyPins[0]);
+
+// Pines de los componentes de salida
+const int ledPin = 2;
+const int buzzerPin = 25;
+
+// Variables para almacenar el estado de los pulsadores
+int keyStates[numKeys];
+
+// =================================================================
+// setup()
+// =================================================================
+void setup() {
+  Serial.begin(115200);
+
+  // Configuramos los pines de los pulsadores como INPUT_PULLUP.
+  // Esto activará la resistencia pull-up interna del ESP32,
+  // lo que le dará a los pines un estado por defecto y evitará la flotación.
+  for (int i = 0; i < numKeys; i++) {
+    pinMode(keyPins[i], INPUT_PULLUP);
+  }
+
+  // Configuramos los pines de las salidas como OUTPUT.
+  pinMode(ledPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+}
+
+// =================================================================
+// loop()
+// =================================================================
+void loop() {
+  // === Leer el estado de los pulsadores y almacenar en el array ===
+  for (int i = 0; i < numKeys; i++) {
+    keyStates[i] = digitalRead(keyPins[i]);
+  }
+
+  // === Lógica de control ===
+
+  // Si se presiona el botón 1 (KEY1), encendemos el LED D1.
+  if (keyStates[0] == LOW) {
+    digitalWrite(ledPin, HIGH);
+    Serial.println("KEY1 presionado. LED D1 ON.");
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+
+  // Si se presiona el botón 2 (KEY2), activamos el buzzer con un tono bajo.
+  if (keyStates[1] == LOW) {
+    tone(buzzerPin, 250);
+    Serial.println("KEY2 presionado. Buzzer ON.");
+  } else {
+    noTone(buzzerPin);
+  }
+
+  // Si se presiona el botón 3 (KEY3), encendemos y apagamos el LED y el buzzer.
+  if (keyStates[2] == LOW) {
+    digitalWrite(ledPin, HIGH);
+    tone(buzzerPin, 250);
+    delay(2000);
+    digitalWrite(ledPin, LOW);
+    noTone(buzzerPin);
+  }
+
+  // Si se presiona el botón 4 (KEY4), apagamos todo.
+  if (keyStates[3] == LOW) {
+    digitalWrite(ledPin, LOW);
+    noTone(buzzerPin);
+    Serial.println("KEY4 presionado. Todo OFF.");
+  }
+}
