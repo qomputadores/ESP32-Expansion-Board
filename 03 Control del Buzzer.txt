@@ -1,0 +1,50 @@
+// =================================================================
+// Iwan
+// 03: Control del Buzzer
+// Aprendizaje: Controlar un componente de salida de sonido
+// Pines usados: Buzzer en el GPIO25
+//
+// Conexión de hardware:
+// Conecta un cable jumper desde el header "Beep" al pin GPIO25 del ESP32.
+//
+// Descripción:
+// Este programa hará sonar el buzzer en intervalos de 2 segundos. Es un
+// ejemplo simple de cómo activar un componente que emite sonido.
+// =================================================================
+
+// La variable que guarda el pin GPIO del buzzer.
+const int buzzerPin = 25; 
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta función se ejecuta una sola vez al encender la placa.
+void setup() {
+  // Inicializamos la comunicación serial.
+  Serial.begin(115200);
+
+  // Configuramos el pin del buzzer como una SALIDA.
+  pinMode(buzzerPin, OUTPUT);
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta función se ejecuta de forma continua.
+void loop() {
+  // === Encender el buzzer ===
+  // digitalWrite() en estado HIGH envía voltaje y activa el buzzer.
+  digitalWrite(buzzerPin, HIGH); 
+  Serial.println("Buzzer: ON");
+
+  // Esperamos 2 segundos mientras el buzzer suena.
+  delay(2000); 
+
+  // === Apagar el buzzer ===
+  // digitalWrite() en estado LOW corta el voltaje y apaga el buzzer.
+  digitalWrite(buzzerPin, LOW); 
+  Serial.println("Buzzer: OFF");
+
+  // Esperamos 2 segundos antes de volver a sonar.
+  delay(2000);
+}
