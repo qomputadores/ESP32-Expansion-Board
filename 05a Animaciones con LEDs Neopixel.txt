@@ -1,0 +1,389 @@
+// =================================================================
+// Iwan
+// 05a: Animaciones con LEDs Neopixel
+// Aprendizaje: Crear múltiples animaciones para los LEDs RGB con la librería Adafruit Neopixel
+// Pines usados:
+//   - Los LEDs Neopixel están conectados al header "WS" en el pin GPIO2
+//
+// Conexión de hardware:
+// Conecta un cable jumper desde el header "WS" al pin GPIO2 del ESP32.
+//
+// Descripción:
+// Este programa te enseña a crear animaciones para los LEDs Neopixel. Utiliza
+// la función setPixelColor para cambiar el color de cada LED de forma individual
+// y crea diferentes efectos visuales.
+// =================================================================
+
+// 1. Incluir la librería de Adafruit NeoPixel
+#include <Adafruit_NeoPixel.h>
+
+// 2. Definir los pines y el número de LEDs
+#define LED_PIN    2
+#define LED_COUNT 5
+
+// 3. Crear el objeto para controlar los LEDs
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+// =================================================================
+// Funciones de animaciones
+// =================================================================
+
+// Apaga todos los LEDs
+void apagarLeds() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 0, 0));
+  }
+  strip.show();
+  delay(1000); // 1 segundo de apagado
+}
+
+// 1. Todos los LEDs en color rojo
+void animacionRojo() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(255, 0, 0));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 2. Todos los LEDs en color verde
+void animacionVerde() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 255, 0));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 3. Todos los LEDs en color azul
+void animacionAzul() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 0, 255));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 4. Luces alternas (Rojo, Azul, Rojo, Azul...)
+void animacionAlterna() {
+  strip.setPixelColor(0, strip.Color(255, 0, 0));
+  strip.setPixelColor(1, strip.Color(0, 0, 255));
+  strip.setPixelColor(2, strip.Color(255, 0, 0));
+  strip.setPixelColor(3, strip.Color(0, 0, 255));
+  strip.setPixelColor(4, strip.Color(255, 0, 0));
+  strip.show();
+  delay(500);
+}
+
+// 5. Luces en degradado (de blanco a apagado)
+void animacionDegradadoBlanco() {
+  for(int i=255; i>=0; i--) {
+    for(int j=0; j<LED_COUNT; j++) {
+      strip.setPixelColor(j, strip.Color(i, i, i));
+    }
+    strip.show();
+    delay(10);
+  }
+}
+
+// 6. Luces que se encienden una a una
+void animacionSecuencia() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 0, 255));
+    strip.show();
+    delay(200);
+  }
+}
+
+// 7. Luces que se apagan una a una
+void animacionApagadoSecuencia() {
+  for(int i=LED_COUNT-1; i>=0; i--) {
+    strip.setPixelColor(i, strip.Color(0, 0, 0));
+    strip.show();
+    delay(200);
+  }
+}
+
+// 8. Un LED que recorre la tira (blanco)
+void animacionRecorrido() {
+  for(int i=0; i<LED_COUNT; i++) {
+    apagarLeds(); // Apagamos antes
+    strip.setPixelColor(i, strip.Color(255, 255, 255));
+    strip.show();
+    delay(200);
+  }
+}
+
+// 9. Un LED que recorre la tira de vuelta (rojo)
+void animacionRecorridoInverso() {
+  for(int i=LED_COUNT-1; i>=0; i--) {
+    apagarLeds(); // Apagamos antes
+    strip.setPixelColor(i, strip.Color(255, 0, 0));
+    strip.show();
+    delay(200);
+  }
+}
+
+// 10. Colores primarios (Rojo, Verde, Azul, Rojo, Verde)
+void animacionPrimarios() {
+  strip.setPixelColor(0, strip.Color(255, 0, 0));
+  strip.setPixelColor(1, strip.Color(0, 255, 0));
+  strip.setPixelColor(2, strip.Color(0, 0, 255));
+  strip.setPixelColor(3, strip.Color(255, 0, 0));
+  strip.setPixelColor(4, strip.Color(0, 255, 0));
+  strip.show();
+  delay(500);
+}
+
+// 11. Arcoíris estático
+void animacionArcoirisEstatico() {
+  strip.setPixelColor(0, strip.Color(255, 0, 0));
+  strip.setPixelColor(1, strip.Color(255, 127, 0));
+  strip.setPixelColor(2, strip.Color(255, 255, 0));
+  strip.setPixelColor(3, strip.Color(0, 255, 0));
+  strip.setPixelColor(4, strip.Color(0, 0, 255));
+  strip.show();
+  delay(500);
+}
+
+// 12. Brillo ascendente (todos los LEDs)
+void animacionBrilloAscendente() {
+  for (int i = 0; i <= 255; i++) {
+    for(int j=0; j<LED_COUNT; j++) {
+      strip.setPixelColor(j, strip.Color(i, i, i));
+    }
+    strip.show();
+    delay(10);
+  }
+}
+
+// 13. Brillo descendente (todos los LEDs)
+void animacionBrilloDescendente() {
+  for (int i = 255; i >= 0; i--) {
+    for(int j=0; j<LED_COUNT; j++) {
+      strip.setPixelColor(j, strip.Color(i, i, i));
+    }
+    strip.show();
+    delay(10);
+  }
+}
+
+// 14. Todos los LEDs en color amarillo
+void animacionAmarillo() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(255, 255, 0));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 15. Todos los LEDs en color cian
+void animacionCian() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 255, 255));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 16. Todos los LEDs en color magenta
+void animacionMagenta() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(255, 0, 255));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 17. Todos los LEDs en color blanco
+void animacionBlanco() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(255, 255, 255));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 18. Fuego artificial
+void animacionFuegoArtificial() {
+  int randomLed = random(LED_COUNT);
+  strip.setPixelColor(randomLed, strip.Color(255, 100, 0));
+  strip.show();
+  delay(200);
+  strip.setPixelColor(randomLed, strip.Color(0, 0, 0));
+  strip.show();
+}
+
+// 19. Luces alternas (Rojo y Verde)
+void animacionAlternaRV() {
+  strip.setPixelColor(0, strip.Color(255, 0, 0));
+  strip.setPixelColor(1, strip.Color(0, 255, 0));
+  strip.setPixelColor(2, strip.Color(255, 0, 0));
+  strip.setPixelColor(3, strip.Color(0, 255, 0));
+  strip.setPixelColor(4, strip.Color(255, 0, 0));
+  strip.show();
+  delay(500);
+}
+
+// 20. Luces alternas (Azul y Amarillo)
+void animacionAlternaBA() {
+  strip.setPixelColor(0, strip.Color(0, 0, 255));
+  strip.setPixelColor(1, strip.Color(255, 255, 0));
+  strip.setPixelColor(2, strip.Color(0, 0, 255));
+  strip.setPixelColor(3, strip.Color(255, 255, 0));
+  strip.setPixelColor(4, strip.Color(0, 0, 255));
+  strip.show();
+  delay(500);
+}
+
+// 21. Secuencia de colores primarios
+void animacionSecuenciaPrimarios() {
+  strip.setPixelColor(0, strip.Color(255, 0, 0));
+  strip.show(); delay(200);
+  strip.setPixelColor(1, strip.Color(0, 255, 0));
+  strip.show(); delay(200);
+  strip.setPixelColor(2, strip.Color(0, 0, 255));
+  strip.show(); delay(200);
+  strip.setPixelColor(3, strip.Color(255, 0, 0));
+  strip.show(); delay(200);
+  strip.setPixelColor(4, strip.Color(0, 255, 0));
+  strip.show(); delay(200);
+}
+
+// 22. Todos los LEDs en color turquesa
+void animacionTurquesa() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(64, 224, 208));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 23. Todos los LEDs en color lavanda
+void animacionLavanda() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(230, 230, 250));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 24. Todos los LEDs en color coral
+void animacionCoral() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(255, 127, 80));
+  }
+  strip.show();
+  delay(500);
+}
+
+// 25. Todos los LEDs en color dorado
+void animacionDorado() {
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(255, 215, 0));
+  }
+  strip.show();
+  delay(500);
+}
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta función se ejecuta una sola vez al encender la placa.
+void setup() {
+  // Inicializamos la comunicación serial.
+  Serial.begin(115200);
+
+  // Inicializar el objeto de los LEDs
+  strip.begin();
+  
+  // Establecer el brillo de los LEDs (0-255)
+  strip.setBrightness(100); 
+
+  // Apagar todos los LEDs al inicio
+  strip.show();
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta función se ejecuta de forma continua.
+void loop() {
+  animacionRojo();
+  apagarLeds();
+
+  animacionVerde();
+  apagarLeds();
+
+  animacionAzul();
+  apagarLeds();
+  
+  animacionAlterna();
+  apagarLeds();
+
+  animacionDegradadoBlanco();
+  apagarLeds();
+
+  animacionSecuencia();
+  apagarLeds();
+
+  animacionApagadoSecuencia();
+  apagarLeds();
+
+  animacionRecorrido();
+  apagarLeds();
+
+  animacionRecorridoInverso();
+  apagarLeds();
+
+  animacionPrimarios();
+  apagarLeds();
+
+  animacionArcoirisEstatico();
+  apagarLeds();
+
+  animacionBrilloAscendente();
+  apagarLeds();
+
+  animacionBrilloDescendente();
+  apagarLeds();
+  
+  animacionAmarillo();
+  apagarLeds();
+
+  animacionCian();
+  apagarLeds();
+
+  animacionMagenta();
+  apagarLeds();
+
+  animacionBlanco();
+  apagarLeds();
+  
+  // El for loop lo usamos para que se repitan varias veces
+  for(int i = 0; i < 5; i++) {
+    animacionFuegoArtificial();
+  }
+  apagarLeds();
+
+  animacionAlternaRV();
+  apagarLeds();
+  
+  animacionAlternaBA();
+  apagarLeds();
+
+  animacionSecuenciaPrimarios();
+  apagarLeds();
+
+  animacionTurquesa();
+  apagarLeds();
+
+  animacionLavanda();
+  apagarLeds();
+  
+  animacionCoral();
+  apagarLeds();
+  
+  animacionDorado();
+  apagarLeds();
+}
