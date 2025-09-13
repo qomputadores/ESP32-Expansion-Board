@@ -1,0 +1,77 @@
+// =================================================================
+// Iwan
+// 05: Control de LEDs Neopixel
+// Aprendizaje: Controlar LEDs RGB con la librería Adafruit Neopixel
+// Pines usados:
+//   - Los LEDs Neopixel están conectados al header "WS" en el pin GPIO2
+//
+// Conexión de hardware:
+// No necesitas conexiones externas. El programa funciona con los componentes integrados de la board.
+//
+// Descripción:
+// Este programa encenderá los 5 LEDs RGB de la placa con 5 colores diferentes en un bucle continuo.
+// A diferencia de un LED normal, estos LEDs se controlan de forma serial y necesitan una librería
+// para funcionar.
+// =================================================================
+
+// 1. Incluir la librería de Adafruit NeoPixel
+#include <Adafruit_NeoPixel.h>
+
+// 2. Definir los pines y el número de LEDs
+#define LED_PIN    2
+#define LED_COUNT 5
+
+// 3. Crear el objeto para controlar los LEDs
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta función se ejecuta una sola vez al encender la placa.
+void setup() {
+  // Inicializamos la comunicación serial.
+  Serial.begin(115200);
+
+  // Inicializar el objeto de los LEDs
+  strip.begin();
+  
+  // Establecer el brillo de los LEDs (0-255)
+  strip.setBrightness(100); 
+
+  // Apagar todos los LEDs al inicio
+  strip.show();
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta función se ejecuta de forma continua.
+void loop() {
+  // === Encender los 5 LEDs con colores diferentes ===
+  
+  // LED 1: Rojo
+  strip.setPixelColor(0, strip.Color(255, 0, 0));
+  
+  // LED 2: Verde
+  strip.setPixelColor(1, strip.Color(0, 255, 0));
+  
+  // LED 3: Azul
+  strip.setPixelColor(2, strip.Color(0, 0, 255));
+  
+  // LED 4: Amarillo
+  strip.setPixelColor(3, strip.Color(255, 255, 0));
+  
+  // LED 5: Púrpura
+  strip.setPixelColor(4, strip.Color(128, 0, 128));
+
+  // Mostrar los colores
+  strip.show();
+  delay(1000); 
+
+  // === Apagar todos los LEDs ===
+  for(int i=0; i<LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 0, 0));
+  }
+  strip.show();
+  delay(1000);
+}
