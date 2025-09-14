@@ -1,0 +1,58 @@
+// =================================================================
+// Iwan
+// 06: Control de Rele
+// Aprendizaje: Controlar un interruptor electromagnético (rele) con un microcontrolador.
+// Pines usados:
+//    - El rele esta conectado al header "REL" en el pin GPIO27
+//
+// Conexión de hardware:
+// Conecta un cable jumper desde el header "REL" al pin GPIO27 del ESP32.
+//
+// Descripción:
+// Este programa te enseña a controlar un rele, un interruptor que permite
+// encender o apagar dispositivos de mayor potencia o voltaje. El programa
+// activa y desactiva el rele en un ciclo repetitivo.
+// =================================================================
+
+#include <Arduino.h>
+
+// 1. Definir los pines y el tiempo de espera
+#define RELAY_PIN 27 // Pin para controlar el rele
+#define DELAY_TIME 2000 // Tiempo de espera en milisegundos (2 segundos)
+
+// 2. Variables (opcional)
+// No hay variables globales necesarias para este programa simple.
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta función se ejecuta una sola vez al encender la placa.
+void setup() {
+  // Inicializamos la comunicación serial a 115200 baudios.
+  Serial.begin(115200);
+  Serial.println("--- Programa de Prueba de Rele ---");
+  Serial.println("Rele conectado a GPIO27");
+  
+  // Configura el pin del rele como una SALIDA.
+  pinMode(RELAY_PIN, OUTPUT);
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta función se ejecuta de forma continua.
+void loop() {
+  // Enciende el rele.
+  digitalWrite(RELAY_PIN, HIGH);
+  Serial.println("Rele: ENCENDIDO");
+  
+  // Espera el tiempo definido antes de cambiar el estado.
+  delay(DELAY_TIME);
+
+  // Apaga el rele.
+  digitalWrite(RELAY_PIN, LOW);
+  Serial.println("Rele: APAGADO");
+
+  // Espera el tiempo definido antes de repetir el ciclo.
+  delay(DELAY_TIME);
+}
