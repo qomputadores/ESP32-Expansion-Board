@@ -1,0 +1,66 @@
+// =================================================================
+// Iwan
+// 08: Control de Servomotor SG90
+// Aprendizaje: Controlar la posición de un servomotor usando el ESP32.
+//              Identificar el propósito de cada cable por su color.
+// Pines usados:
+//    - Servomotor: conectado al header "SG90" en el pin GPIO17
+//
+// Conexión de hardware:
+// Tu board de expansión tiene un header para 4 servomotores en la
+// parte superior derecha. Conecta tu servomotor en la ranura marcada
+// con el pin 17.
+//
+// Pines del Servomotor:
+//    - Cable Marrón: GND (Tierra)
+//    - Cable Rojo: VCC (Alimentación)
+//    - Cable Naranja: Señal (Va al pin GPIO17)
+// =================================================================
+
+#include <Arduino.h>
+#include <ESP32Servo.h>
+
+// 1. Definir el pin del servomotor
+const int SERVO_PIN = 17;
+
+// 2. Crear un objeto de tipo 'Servo'
+Servo myServo;
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta funcion se ejecuta una sola vez al encender la placa.
+void setup() {
+  // Inicializamos la comunicacion serial a 115200 baudios.
+  Serial.begin(115200);
+  Serial.println("--- Programa de Prueba de Servomotor ---");
+  
+  // Asociamos el objeto Servo al pin del ESP32
+  myServo.attach(SERVO_PIN);
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta funcion se ejecuta de forma continua.
+void loop() {
+  // Mover el servo de 0 a 180 grados
+  for (int pos = 0; pos <= 180; pos++) {
+    myServo.write(pos); // Mueve el servo a la posicion 'pos'
+    Serial.print("Posicion: ");
+    Serial.println(pos);
+    delay(15); // Espera 15 ms para que el servo se mueva
+  }
+  
+  delay(1000); // Espera 1 segundo en la posicion final
+  
+  // Mover el servo de 180 a 0 grados
+  for (int pos = 180; pos >= 0; pos--) {
+    myServo.write(pos); // Mueve el servo a la posicion 'pos'
+    Serial.print("Posicion: ");
+    Serial.println(pos);
+    delay(15); // Espera 15 ms para que el servo se mueva
+  }
+  
+  delay(1000); // Espera 1 segundo en la posicion inicial
+}
