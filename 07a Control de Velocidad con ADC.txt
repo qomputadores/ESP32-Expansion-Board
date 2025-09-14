@@ -1,0 +1,80 @@
+// =================================================================
+// Iwan
+// 07a: Control de Velocidad con ADC
+// Aprendizaje: Utilizar un sensor analogo (potenciometro) para
+//              controlar la velocidad de una animacion (parpadeo de LEDs)
+//              y mostrar el valor en porcentaje.
+// Pines usados:
+//    - Potenciometro: conectado al header "ADC" en el pin GPIO34
+//    - LEDs NeoPixel: conectados al header "WS" en el pin GPIO2
+//
+// Conexión de hardware:
+// Conecta un cable jumper desde el header "ADC" al pin GPIO34 del ESP32.
+// Conecta los LEDs NeoPixel (WS) al pin GPIO2 del ESP32.
+// =================================================================
+
+#include <Arduino.h>
+#include <Adafruit_NeoPixel.h>
+
+// 1. Definir los pines y el numero de LEDs
+#define LED_PIN   2
+#define LED_COUNT 5
+#define POT_PIN   34
+
+// 2. Crear el objeto para controlar los LEDs
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta funcion se ejecuta una sola vez al encender la placa.
+void setup() {
+  // Inicializamos la comunicacion serial a 115200 baudios.
+  Serial.begin(115200);
+  Serial.println("--- Programa de Control de Velocidad ---");
+  
+  // Inicializamos los LEDs NeoPixel
+  strip.begin();
+  strip.setBrightness(100);
+  strip.show(); // Apagar todos los LEDs al inicio
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta funcion se ejecuta de forma continua.
+void loop() {
+  // 1. Leer el valor del potenciometro (rango 0-4095).
+  int adcValue = analogRead(POT_PIN);
+  
+  // 2. Mapear el valor del ADC a un rango de tiempo para el parpadeo.
+  // Un valor bajo del ADC (0) resulta en un delay largo (1000ms),
+  // y un valor alto del ADC (4095) resulta en un delay corto (10ms).
+  int blinkDelay = map(adcValue, 0, 4095, 1000, 10);
+  
+  // 3. Convertir el valor ADC a porcentaje (rango 0-100).
+  int percentage = map(adcValue, 0, 4095, 0, 100);
+
+  // 4. Imprimir los valores para depuracion
+  Serial.print("Valor ADC: ");
+  Serial.print(adcValue);
+  Serial.print("  -> Delay: ");
+  Serial.print(blinkDelay);
+  Serial.print(" ms -> Porcentaje: ");
+  Serial.print(percentage);
+  Serial.println(" %");
+
+  // 5. Encender todos los LEDs
+  for(int i = 0; i < LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 255, 0)); // Color verde
+  }
+  strip.show();
+  delay(blinkDelay); // Espera con el valor mapeado
+  
+  // 6. Apagar todos los LEDs
+  for(int i = 0; i < LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 0, 0));
+  }
+  strip.show();
+  delay(blinkDelay); // Espera con el valor mapeado
+}
