@@ -1,0 +1,60 @@
+// =================================================================
+// Iwan
+// 07: Lectura de Potenciómetro (ADC)
+// Aprendizaje: Leer un valor analogico usando el convertidor análogo-digital (ADC) del ESP32.
+// Pines usados:
+//    - El potenciómetro esta conectado al header "ADC" en el pin GPIO34
+//
+// Conexión de hardware:
+// Conecta un cable jumper desde el header "ADC" al pin GPIO34 del ESP32.
+//
+// Descripción:
+// Este programa lee la información de un potenciómetro, un componente que
+// varía su resistencia y, por lo tanto, el voltaje de entrada. El valor
+// leído se muestra en el monitor serie, demostrando la capacidad del ESP32
+// para procesar señales analogicas.
+//
+// Una vez que subas el programa, abre el Monitor Serie. Si todo está funcionando 
+// correctamente, al girar la perilla del potenciómetro verás cómo los valores 
+// leídos cambian de forma continua entre 0 y 4095.
+// =================================================================
+
+#include <Arduino.h>
+
+// 1. Definir los pines
+#define ADC_PIN 34  // Pin para leer la señal analoga.
+
+// 2. Variables (opcional)
+// No hay variables globales necesarias para este programa simple.
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta función se ejecuta una sola vez al encender la placa.
+void setup() {
+  // Inicializamos la comunicación serial a 115200 baudios.
+  Serial.begin(115200);
+  Serial.println("--- Programa de Lectura de ADC ---");
+  Serial.println("Potenciometro conectado a GPIO34");
+
+  // Nota: Los pines ADC no necesitan configurarse con pinMode(pin, INPUT).
+  // Ya están configurados como entrada por defecto.
+  
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta función se ejecuta de forma continua.
+void loop() {
+  // 1. Leer el valor del pin ADC.
+  // El rango de lectura del ESP32 es de 0 a 4095.
+  int adcValue = analogRead(ADC_PIN);
+
+  // 2. Imprimir el valor leido en el monitor serie.
+  Serial.print("Valor ADC: ");
+  Serial.println(adcValue);
+
+  // 3. Pequeña pausa para que las lecturas sean legibles.
+  delay(100);
+}
