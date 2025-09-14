@@ -1,0 +1,73 @@
+// =================================================================
+// Iwan
+// 09: Control de Intensidad (PWM) para Ventilador (version final)
+// Aprendizaje: Controlar la velocidad de un motor DC utilizando el
+//              hardware de PWM dedicado del ESP32 para mayor
+//              eficiencia.
+//
+// NOTA IMPORTANTE:
+// Este programa utiliza las funciones ledcSetup y ledcAttachPin,
+// las cuales han sido eliminadas o reemplazadas en la version 3.0
+// del nucleo de Arduino para ESP32. Por favor, asegurese de tener
+// instalada una version 2.x, como la 2.0.17, para que el programa
+// compile y funcione correctamente.
+//
+// Pines usados:
+//    - Pin de control del motor: GPIO21
+//
+// Conexión de hardware:
+// ADVERTENCIA: Esta conexion alimenta el motor desde el ESP32.
+//              Es solo para fines de prueba, no para un uso prolongado.
+//              Podria dañar la placa si el motor consume demasiada corriente.
+//
+// Conecta un jumper desde el pin IN1 del driver al pin GPIO21 del ESP32.
+//
+// Conecta un terminal del motor al pin 5V del driver.
+// Conecta el otro terminal del motor al pin O1 del driver.
+//
+// =================================================================
+
+#include <Arduino.h>
+
+// 1. Definir el pin de control para el motor
+const int MOTOR_PIN = 21;
+
+// 2. Definir los parametros de la señal PWM
+const int PWM_CHANNEL = 0; // Canal PWM del ESP32 (0-15)
+const int PWM_FREQ = 5000; // Frecuencia de la señal PWM en Hz
+const int PWM_BITS = 8;    // Resolucion del PWM (0-255)
+
+// =================================================================
+// setup()
+// =================================================================
+void setup() {
+  // Inicializamos la comunicacion serial
+  Serial.begin(115200);
+  Serial.println("--- Programa de Control de Motor DC ---");
+
+  // Configuramos el canal PWM y adjuntamos el pin
+  // Esta es la forma más eficiente y recomendada de hacerlo.
+  ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_BITS);
+  ledcAttachPin(MOTOR_PIN, PWM_CHANNEL);
+}
+
+// =================================================================
+// loop()
+// =================================================================
+void loop() {
+  // 1. Acelerar el motor gradualmente
+  Serial.println("Acelerando el ventilador...");
+  for (int dutyCycle = 0; dutyCycle <= 255; dutyCycle += 5) {
+    ledcWrite(PWM_CHANNEL, dutyCycle);
+    delay(50);
+  }
+  delay(1000);
+
+  // 2. Detener el motor gradualmente
+  Serial.println("Desacelerando el ventilador...");
+  for (int dutyCycle = 255; dutyCycle >= 0; dutyCycle -= 5) {
+    ledcWrite(PWM_CHANNEL, dutyCycle);
+    delay(50);
+  }
+  delay(2000);
+}
