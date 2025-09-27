@@ -1,0 +1,74 @@
+// =================================================================
+// Iwan
+// 11: MQ2_LECTURA_ANALOGICA
+// Aprendizaje: Leer datos analógicos de un sensor de gas MQ-2 y mostrarlos 
+//              en el Monitor Serie, verificando la concentración de gas usando
+//              la lectura del conversor ADC del ESP32.
+//
+// Componentes: ESP32 (con Board de expansión), 1x Sensor de Gas MQ-2.
+//
+// Pines usados:
+// - Pin de Lectura Analógica (A0): GPIO34
+//
+// Conexión de hardware:
+// Conecta el pin A0 (Analógico) del MQ-2 al pin GPIO34 del ESP32.
+//
+// Librerías: Ninguna externa requerida.
+//
+// NOTA IMPORTANTE:
+// El sensor MQ-2 requiere un tiempo de calentamiento (aproximadamente 20 segundos)
+// para estabilizar su lectura. Los valores ADC bajos (cercanos a 0) indican aire limpio, 
+// y los valores altos (cercanos a 4095) indican alta concentración de gas/humo.
+// =================================================================
+
+// 1. DEFINICIÓN DE PINES Y PARÁMETROS
+
+// Pin Analógico del ESP32 conectado a la salida A0 del sensor MQ-2
+// El GPIO 34 es un pin solo de entrada (input-only), ideal para ADC en el ESP32.
+const int MQ2_PIN_A0 = 34; 
+
+// =================================================================
+// setup()
+// =================================================================
+void setup() {
+  // Inicialización de la comunicación Serial
+  Serial.begin(115200);
+  Serial.println("--- Tutorial 11: MQ-2 Lectura Analógica ---");
+
+  // Mensaje de calentamiento
+  Serial.println("INICIANDO: Sensor MQ-2 requiere tiempo de calentamiento...");
+  
+  // Tiempo de espera para que el sensor MQ-2 se estabilice
+  delay(20000); 
+
+  Serial.println("CALENTAMIENTO COMPLETO. Iniciando lectura de datos.");
+  Serial.println("--------------------------------------------------");
+  Serial.println("Concentración (ADC 0-4095) | Estado Estimado");
+  Serial.println("--------------------------------------------------");
+}
+
+// =================================================================
+// loop()
+// =================================================================
+void loop() {
+  // 1. Leer el valor analógico del sensor
+  // El ESP32 usa una resolución de 12 bits, dando un rango de 0 a 4095 por defecto.
+  int valorGas = analogRead(MQ2_PIN_A0);
+  String estado = "Normal";
+
+  // 2. Determinar estado estimado (Umbrales de ejemplo para la demostración)
+  if (valorGas > 3000) { 
+    estado = "PELIGRO (Concentración muy alta)";
+  } else if (valorGas > 1500) {
+    estado = "ALERTA (Detectando concentración)";
+  } 
+
+  // 3. Mostrar la lectura en el Monitor Serie
+  Serial.print("Lectura ADC: ");
+  Serial.print(valorGas);
+  Serial.print(" | ");
+  Serial.println(estado);
+
+  // Pausa de medio segundo antes de la próxima lectura
+  delay(500);
+}
