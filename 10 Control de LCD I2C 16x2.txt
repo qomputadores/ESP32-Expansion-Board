@@ -1,0 +1,149 @@
+// =================================================================
+// Iwan
+// 10: LCD_I2C_16X2
+// Aprendizaje: Comunicarse con periféricos usando el protocolo I2C, y controlar 
+//              una pantalla de cristal líquido para mostrar información de 
+//              manera eficiente usando solo dos pines GPIO.
+//
+// Componentes: ESP32 (con Board de expansión), 1x Pantalla LCD I2C 16x2.
+//
+// Pines usados:
+// - Pin de Datos I2C (SDA): GPIO21
+// - Pin de Reloj I2C (SCL): GPIO22
+//
+// Conexión de hardware:
+// Conecta los pines I2C de la LCD a los pines I2C nativos del ESP32.
+// - SDA de la LCD al pin GPIO21 del ESP32.
+// - SCL de la LCD al pin GPIO22 del ESP32.
+// - VCC de la LCD a 5V o 3.3V de la Board de Expansión.
+// - GND de la LCD a GND.
+// 
+// Librerías: LiquidCrystal_I2C.h (asegúrate de instalarla desde el gestor de librerías de Arduino).
+//
+// NOTA IMPORTANTE:
+// Si la pantalla no muestra texto, es probable que la dirección I2C sea 0x3F en lugar de 0x27.
+// Modifica el código si es necesario.
+// =================================================================
+
+// 1. INCLUSIÓN DE LA LIBRERÍA
+// Esencial para controlar la LCD a través de la comunicación I2C.
+#include <LiquidCrystal_I2C.h>
+
+// 2. DEFINICIÓN DEL OBJETO LCD Y PARÁMETROS
+const int LCD_COLS = 16;
+const int LCD_ROWS = 2;
+// Inicializa la LCD: (Dirección I2C, Columnas, Filas). Usamos 0x27 por defecto.
+LiquidCrystal_I2C lcd(0x27, LCD_COLS, LCD_ROWS); 
+
+// Pausa para que cada demostración sea visible (en milisegundos).
+const int PAUSA_DEMO = 3000; 
+
+// =================================================================
+// setup()
+// =================================================================
+void setup() {
+  // Inicialización de la comunicación Serial para depuración.
+  Serial.begin(115200);
+  Serial.println("--- Tutorial 10: Inicializando LCD I2C ---");
+
+  // Inicialización de la interfaz de la LCD
+  lcd.init();
+  // Enciende la luz de fondo (backlight)
+  lcd.backlight();
+  
+  // Mensaje de Bienvenida inicial
+  lcd.setCursor(0, 0); 
+  lcd.print("Tutorial LCD 10");
+  lcd.setCursor(0, 1);
+  lcd.print("Listo para demo...");
+}
+
+// =================================================================
+// loop()
+// =================================================================
+void loop() {
+  // --- DEMO 1: Escritura en ambas líneas ---
+  delay(PAUSA_DEMO); 
+  lcd.clear(); // Limpia la pantalla antes de empezar la demo.
+  Serial.println("Demo 1: Escritura simple.");
+  
+  // Escribe en la primera línea (Fila 0)
+  lcd.setCursor(0, 0); 
+  lcd.print("Linea 0: Escribir");
+  
+  // Escribe en la segunda línea (Fila 1), reposicionando el cursor.
+  lcd.setCursor(0, 1); 
+  lcd.print("Linea 1: Separada!");
+  
+  delay(PAUSA_DEMO); 
+
+  // --- DEMO 2: Control del Cursor (Texto en Posiciones Específicas) ---
+  delay(1000); 
+  lcd.clear(); // Limpia la pantalla para la nueva demo.
+  Serial.println("Demo 2: Posicionamiento de Cursor.");
+
+  // Escribe texto en posiciones específicas para demostrar el cursor
+  lcd.setCursor(0, 0); 
+  lcd.print("Col 0"); 
+  
+  lcd.setCursor(11, 0); 
+  lcd.print("Col 11"); 
+  
+  lcd.setCursor(0, 1); 
+  lcd.print("Fila 1"); 
+  
+  lcd.setCursor(10, 1); 
+  lcd.print("Fin Fila 1"); 
+  
+  delay(PAUSA_DEMO); 
+
+  // --- DEMO 3: Desplazamiento (Scroll a la Izquierda) ---
+  lcd.clear();
+  Serial.println("Demo 3: Scroll a la Izquierda.");
+
+  lcd.setCursor(0, 0); 
+  lcd.print("Mensaje muy largo!");
+  lcd.setCursor(0, 1);
+  lcd.print("Desplazando texto ->");
+  
+  // Desplazamos todo el contenido 16 veces para el efecto.
+  for (int i = 0; i < LCD_COLS; i++) {
+    lcd.scrollDisplayLeft();
+    delay(300); 
+  }
+  delay(1000);
+
+  // --- DEMO 4: Desplazamiento (Scroll a la Derecha) ---
+  Serial.println("Demo 4: Scroll a la Derecha.");
+
+  // Desplazamos de vuelta a la derecha 16 veces.
+  for (int i = 0; i < LCD_COLS; i++) {
+    lcd.scrollDisplayRight();
+    delay(300); 
+  }
+  delay(1000);
+  
+  // --- DEMO 5: Control de Backlight ---
+  lcd.clear();
+  Serial.println("Demo 5: Control de Backlight.");
+
+  lcd.setCursor(0, 0); 
+  lcd.print("Luz: Apagando...");
+  
+  delay(PAUSA_DEMO);
+  
+  lcd.noBacklight(); // Apagar la luz de fondo
+  delay(PAUSA_DEMO);
+  
+  lcd.backlight(); // Volver a encender la luz de fondo
+  delay(1000);
+  
+  // Mensaje de Reinicio
+  lcd.clear();
+  lcd.setCursor(0, 0); 
+  lcd.print("DEMOS COMPLETAS!");
+  lcd.setCursor(0, 1);
+  lcd.print("Reiniciando ciclo...");
+  
+  delay(PAUSA_DEMO);
+}
