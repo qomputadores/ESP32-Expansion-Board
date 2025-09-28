@@ -1,0 +1,190 @@
+// =================================================================
+// Iwan
+// 13: RFID_RC522 (CONTROL DE ACCESO CON NEOPIXELS)
+// -----------------------------------------------------------------
+// APRENDIZAJE: Implementar un sistema de control de acceso básico que 
+//              compara el UID de una tarjeta con UIDs autorizados y 
+//              ofrece feedback visual mediante una animación de espera
+//              (Cometa) y respuestas de acceso (Verde/Rojo) en la 
+//              tira de 5 NeoPixels integrada.
+//
+// COMPONENTES: ESP32 (con Board de expansión), 1x Módulo RFID RC522.
+//
+// CONEXIONES DE HARDWARE (¡CONFIGURACIÓN VERIFICADA!):
+// 
+// Módulo RC522 -> ESP32:
+// Pin del RC522 | Pin del ESP32 (GPIO)
+// :---: | :---:
+// VCC   | 3.3V
+// GND   | GND
+// SCK   | GPIO 18
+// MOSI  | GPIO 23
+// MISO  | GPIO 19
+// SDA   | GPIO 5
+// RST   | GPIO 27
+//
+// NeoPixels (INTEGRADOS en la Board) -> ESP32:
+// Pin de control (WS/DATA) | GPIO 15 (Conectado al header WS de la Board)
+//
+// LIBRERÍAS: SPI.h, MFRC522.h, Adafruit_NeoPixel.h
+// =================================================================
+
+// 1. INCLUSIÓN DE LIBRERÍAS
+#include <SPI.h>       
+#include <MFRC522.h>   
+#include <Adafruit_NeoPixel.h>
+
+// 2. DEFINICIÓN DE PINES Y OBJETOS RFID
+#define SS_PIN    5   // Chip Select (CS/SDA)
+#define RST_PIN   27  // Reset (RST) <-- ¡CONFIGURACIÓN FINAL!
+MFRC522 rfid(SS_PIN, RST_PIN);
+
+// 3. DEFINICIÓN DE PINES Y OBJETOS NEOPIXEL
+#define PIN_NEOPIXEL    15  // Pin de datos interno de la Board de expansión (header WS)
+#define NUM_PIXELS      5   // Número de LEDs en la tira
+#define BRIGHTNESS      50  // Brillo (0-255)
+
+// Inicialización del objeto NeoPixel
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_PIXELS, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
+
+// 4. DEFINICIÓN DE UIDs AUTORIZADOS
+const String UID_MAESTRO_1 = "CB11A71B"; 
+const String UID_MAESTRO_2 = "A342721A"; 
+
+// Variables para la animación de espera (Cometa)
+int anim_pos = 0; 
+unsigned long last_anim_time = 0;
+const int ANIM_DELAY = 100; // Velocidad de la animación en ms
+
+// =================================================================
+// FUNCIÓN AUXILIAR: Convierte el UID (array de bytes) a String (hexadecimal)
+// =================================================================
+String byteToString(byte *buffer, byte bufferSize) {
+  String result = "";
+  for (byte i = 0; i < bufferSize; i++) {
+    result += String(buffer[i] < 0x10 ? "0" : "");
+    result += String(buffer[i], HEX);
+  }
+  result.toUpperCase();
+  return result;
+}
+
+// =================================================================
+// FUNCIÓN AUXILIAR: Muestra Acceso CONCEDIDO (Verde Fijo 2s)
+// =================================================================
+void grantedAccess() {
+  Serial.println(">>> ACCESO CONCEDIDO");
+  strip.fill(strip.Color(0, BRIGHTNESS, 0), 0, NUM_PIXELS);
+  strip.show();
+  delay(2000); 
+  strip.clear();
+  strip.show();
+}
+
+// =================================================================
+// FUNCIÓN AUXILIAR: Muestra Acceso DENEGADO (Rojo Intermitente 3 veces)
+// =================================================================
+void deniedAccess() {
+  Serial.println(">>> ACCESO DENEGADO");
+  for (int i = 0; i < 3; i++) {
+    strip.fill(strip.Color(BRIGHTNESS, 0, 0), 0, NUM_PIXELS); 
+    strip.show();
+    delay(200);
+    strip.clear();
+    strip.show();
+    delay(200);
+  }
+}
+
+// =================================================================
+// FUNCIÓN AUXILIAR: Animación de Espera (Cometa)
+// =================================================================
+void cometAnimation() {
+  if (millis() - last_anim_time < ANIM_DELAY) {
+    return;
+  }
+  last_anim_time = millis();
+
+  strip.clear();
+
+  uint32_t headColor = strip.Color(0, 0, BRIGHTNESS); 
+
+  for (int i = 0; i < NUM_PIXELS; i++) {
+    int distance = abs(anim_pos - i);
+    
+    if (distance == 0) {
+      strip.setPixelColor(i, headColor); 
+    }
+    else if (distance <= 2) {
+      int tailBrightness = (BRIGHTNESS / 3) * (3 - distance); 
+      strip.setPixelColor(i, strip.Color(0, 0, tailBrightness));
+    }
+  }
+
+  strip.show();
+
+  static bool direction_forward = true; 
+
+  if (direction_forward) {
+    anim_pos++;
+    if (anim_pos >= NUM_PIXELS - 1) {
+      direction_forward = false;
+    }
+  } else {
+    anim_pos--;
+    if (anim_pos <= 0) {
+      direction_forward = true;
+    }
+  }
+}
+
+// =================================================================
+// setup()
+// =================================================================
+void setup() {
+  Serial.begin(115200); // Usaremos 115200 para mayor velocidad de depuración
+  delay(2000); 
+  
+  Serial.println("--- Tutorial 13: RFID Control de Acceso con NeoPixels ---");
+  
+  // Inicialización de SPI y RFID
+  SPI.begin(); 
+  rfid.PCD_Init(); 
+  
+  // Inicialización de NeoPixels
+  strip.begin();
+  strip.setBrightness(BRIGHTNESS); 
+  strip.show(); 
+
+  Serial.println("Lector y NeoPixels listos. UIDs Autorizados en el sistema.");
+  Serial.println("--------------------------------------------------");
+}
+
+// =================================================================
+// loop()
+// =================================================================
+void loop() {
+  // 1. Ejecutar animación de espera
+  cometAnimation();
+
+  // 2. Verificar si hay una nueva tarjeta presente
+  if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) { 
+    return; // No hay tarjeta, salir y seguir con la animación
+  }
+  
+  // 3. Convertir UID leído a String
+  String uidLeido = byteToString(rfid.uid.uidByte, rfid.uid.size);
+  Serial.print("UID Detectado: ");
+  Serial.println(uidLeido);
+  
+  // 4. COMPARACIÓN: Verificar si el UID está en la lista de maestros
+  if (uidLeido.equals(UID_MAESTRO_1) || uidLeido.equals(UID_MAESTRO_2)) {
+    grantedAccess();
+  } else {
+    deniedAccess();
+  }
+
+  // 5. Detener la comunicación con la tarjeta para permitir nuevas lecturas
+  rfid.PICC_HaltA();         
+  rfid.PCD_StopCrypto1();    
+}
