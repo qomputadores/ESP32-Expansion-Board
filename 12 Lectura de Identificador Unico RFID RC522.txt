@@ -18,9 +18,9 @@
 // MOSI  | GPIO 23
 // MISO  | GPIO 19
 // SDA   | GPIO 5
-// RST   | GPIO 2
+// RST   | GPIO 27
 //
-// PINES USADOS: CS=5, RST=2, SCK=18, MOSI=23, MISO=19.
+// PINES USADOS: CS=5, RST=27, SCK=18, MOSI=23, MISO=19.
 // 
 // LIBRERÍAS: SPI.h, MFRC522.h
 //
@@ -101,4 +101,5 @@ void loop() {
   rfid.PCD_StopCrypto1();    // Detiene la encriptación (si estaba activa)
   
   delay(500); 
+
 }
