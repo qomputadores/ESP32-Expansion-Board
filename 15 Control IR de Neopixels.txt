@@ -1,0 +1,247 @@
+// =================================================================
+// Iwan
+// TUTORIAL 15: CONTROL IR DE NEOPIXELS
+// -----------------------------------------------------------------
+// OBJETIVO: Implementar un sistema de control de iluminación LED 
+//           NeoPixel (GPIO 15) utilizando un control remoto IR 
+//           (Receptor en GPIO 26) para gestionar brillo, velocidad 
+//           y cuatro modos de animación.
+//
+// LIBRERÍAS REQUERIDAS: IRremoteESP8266, Adafruit NeoPixel
+//
+// CONEXIONES: Receptor IR -> GPIO 26; NeoPixels -> GPIO 15
+//
+// FUNCIONALIDAD DE BOTONES:
+// [POWER]    : Encendido/Apagado del sistema.
+// [VOL +/-]  : Control de Brillo (pasos de 5 en 5).
+// [FORWARD/BACKWARD]: Control de Velocidad de animaciones.
+// [MODE]     : Ciclar entre los modos 1, 2, 3 y 4.
+// [1]        : Modo 1 (Color Estático Rojo).
+// [2]        : Modo 2 (Arcoíris Móvil).
+// [3]        : Modo 3 (Flash de Colores).
+// [4]        : Modo 4 (Barrido de Color).
+// =================================================================
+
+#include <IRrecv.h>
+#include <IRutils.h>
+#include <Adafruit_NeoPixel.h>
+
+// 1. DEFINICIÓN DE PINES Y CONSTANTES
+const int RECV_PIN = 26; 
+IRrecv irrecv(RECV_PIN);
+decode_results results;
+
+#define PIN_NEOPIXEL    15 
+#define NUM_PIXELS      5  
+#define BRIGHTNESS_STEP 5 // Paso de cambio de brillo (0-255)
+
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_PIXELS, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
+
+// 2. ESTADOS Y VARIABLES GLOBALES
+int currentBrightness = 100; 
+int currentMode = 1;         // 1: Estático, 2: Arcoíris, 3: Flash, 4: Barrido
+bool powerState = true;      // Estado inicial: Encendido
+int animationDelay = 50;     // Retardo inicial de la animación (en ms).
+
+// Variables auxiliares para los efectos
+int hue = 0; 
+bool flashToggle = false; 
+
+// 3. CÓDIGOS HEXADECIMALES DEL CONTROL REMOTO
+const unsigned long IR_POWER     = 0xFFA25D; 
+const unsigned long IR_MODE      = 0xFF629D; 
+const unsigned long IR_VOL_UP    = 0xFF906F; 
+const unsigned long IR_VOL_DOWN  = 0xFFA857; 
+const unsigned long IR_FORWARD   = 0xFFC23D; 
+const unsigned long IR_BACKWARD  = 0xFF02FD; 
+const unsigned long IR_NUM_1     = 0xFF30CF; 
+const unsigned long IR_NUM_2     = 0xFF18E7; 
+const unsigned long IR_NUM_3     = 0xFF7A85; 
+const unsigned long IR_NUM_4     = 0xFF10EF; 
+
+
+// =================================================================
+// FUNCIONES DE ANIMACIÓN Y EFECTOS
+// =================================================================
+
+// MODO 2: Ciclo de color Arcoiris
+void rainbowCycle() {
+    for(int i=0; i<NUM_PIXELS; i++) {
+        strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(hue + (i * 65536 / NUM_PIXELS))));
+    }
+    strip.show();
+    hue += 256; 
+    if (hue >= 65536) {
+        hue = 0;
+    }
+    delay(animationDelay); 
+}
+
+// MODO 3: Flash (Alterna entre Rojo y Azul)
+void flashMode() {
+    if (flashToggle) {
+        strip.fill(strip.Color(currentBrightness, 0, 0), 0, NUM_PIXELS); // Rojo
+    } else {
+        strip.fill(strip.Color(0, 0, currentBrightness), 0, NUM_PIXELS); // Azul
+    }
+    strip.show();
+    flashToggle = !flashToggle;
+    delay(animationDelay);
+}
+
+// MODO 4: Barrido de Color (Enciende LEDs uno por uno)
+void wipeMode() {
+    uint32_t color = strip.Color(0, currentBrightness, 0); // Color: Verde
+    
+    // Barrido ON
+    for(int i=0; i<NUM_PIXELS; i++) {
+        strip.setPixelColor(i, color);
+        strip.show();
+        delay(animationDelay);
+    }
+    // Barrido OFF
+    for(int i=0; i<NUM_PIXELS; i++) {
+        strip.setPixelColor(i, 0);
+        strip.show();
+        delay(animationDelay);
+    }
+}
+
+
+// =================================================================
+// FUNCIONES DE CONTROL DE ESTADO
+// =================================================================
+
+// Aplica el brillo y el modo de iluminación estático (Modo 1).
+void applyMode() {
+    strip.setBrightness(currentBrightness);
+    
+    if (powerState == false) {
+        strip.clear();
+        strip.show();
+        return;
+    }
+
+    if (currentMode == 1) { // Modo 1: Color Estático (Rojo)
+        strip.fill(strip.Color(currentBrightness, 0, 0), 0, NUM_PIXELS);
+        strip.show();
+    } 
+    // Los modos 2, 3 y 4 son dinámicos y se ejecutan en el loop
+}
+
+// Cambia el modo y lo inicializa si es necesario.
+void setMode(int newMode) {
+    currentMode = newMode;
+    Serial.print("Cambiando a Modo: "); Serial.println(currentMode);
+    
+    // Reiniciar variables de animación
+    if (currentMode == 2) hue = 0; 
+    
+    applyMode(); // Aplica el brillo y limpia la pantalla si es un modo dinámico
+}
+
+
+// =================================================================
+// FUNCIÓN: Manejador Principal de Comandos IR
+// =================================================================
+void handleIRCommand(unsigned long commandValue) {
+    
+    // --- CONTROL DE ESTADO ---
+    if (commandValue == IR_POWER) {
+        powerState = !powerState; 
+        Serial.print("Estado: "); Serial.println(powerState ? "ENCENDIDO" : "APAGADO");
+        if (powerState == true) {
+             setMode(1); 
+        }
+        applyMode();
+        return;
+    }
+    
+    // Si el sistema está apagado, ignorar el resto de los comandos
+    if (!powerState) return; 
+
+    // --- CAMBIO Y SELECCIÓN DE MODO ---
+    if (commandValue == IR_MODE) {
+        currentMode++;
+        if (currentMode > 4) currentMode = 1; 
+        setMode(currentMode);
+    }
+    else if (commandValue == IR_NUM_1) setMode(1);
+    else if (commandValue == IR_NUM_2) setMode(2);
+    else if (commandValue == IR_NUM_3) setMode(3);
+    else if (commandValue == IR_NUM_4) setMode(4);
+    
+    // --- AJUSTE DE BRILLO ---
+    else if (commandValue == IR_VOL_UP) {
+        currentBrightness += BRIGHTNESS_STEP;
+        if (currentBrightness > 255) currentBrightness = 255;
+        applyMode(); 
+        Serial.print("Brillo: "); Serial.println(currentBrightness);
+    }
+    else if (commandValue == IR_VOL_DOWN) {
+        currentBrightness -= BRIGHTNESS_STEP;
+        if (currentBrightness < BRIGHTNESS_STEP) currentBrightness = BRIGHTNESS_STEP;
+        applyMode(); 
+        Serial.print("Brillo: "); Serial.println(currentBrightness);
+    }
+
+    // --- AJUSTE DE VELOCIDAD DE ANIMACIÓN ---
+    else if (commandValue == IR_FORWARD) {
+        animationDelay -= 5;
+        if (animationDelay < 10) animationDelay = 10; 
+        Serial.print("Velocidad Aumentada. Delay: "); Serial.print(animationDelay); Serial.println("ms");
+    }
+    else if (commandValue == IR_BACKWARD) {
+        animationDelay += 5;
+        if (animationDelay > 200) animationDelay = 200; 
+        Serial.print("Velocidad Disminuida. Delay: "); Serial.print(animationDelay); Serial.println("ms");
+    }
+}
+
+
+// =================================================================
+// setup()
+// =================================================================
+void setup() {
+    Serial.begin(115200); 
+    delay(2000); 
+
+    irrecv.enableIRIn(); 
+    strip.begin();
+    applyMode();
+    
+    Serial.println("--- SISTEMA DE CONTROL IR DE NEOPIXELS INICIADO ---");
+}
+
+// =================================================================
+// loop()
+// =================================================================
+void loop() {
+    
+    // 1. Ejecutar las animaciones si el sistema está ENCENDIDO y en modo dinámico
+    if (powerState) { 
+        if (currentMode == 2) { 
+            rainbowCycle();
+        } else if (currentMode == 3) {
+            flashMode();
+        } else if (currentMode == 4) {
+            wipeMode();
+        }
+    }
+
+    // 2. Leer la señal IR
+    if (irrecv.decode(&results)) {
+        
+        // Ignorar códigos de repetición
+        if (results.value == 0xFFFFFFFF) {
+            irrecv.resume();
+            return;
+        }
+
+        // Manejar el comando recibido
+        handleIRCommand(results.value);
+        
+        // Reiniciar la recepción IR
+        irrecv.resume(); 
+    }
+}
