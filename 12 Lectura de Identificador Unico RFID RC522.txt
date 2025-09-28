@@ -1,0 +1,104 @@
+// =================================================================
+// Iwan
+// 12: RFID_RC522 (LECTURA DE UID)
+// 
+// APRENDIZAJE: Usar el protocolo de comunicación SPI para leer 
+//              el Identificador Único (UID) de una etiqueta RFID, 
+//              utilizando el módulo RC522 y el ESP32.
+//
+// COMPONENTES: ESP32 (con Board de expansión), 1x Módulo RFID RC522.
+//
+// CONEXIONES DE HARDWARE (Módulo RC522 -> ESP32):
+// 
+// RC522 | ESP32 (GPIO)
+// :---: | :---:
+// VCC   | 3.3V
+// GND   | GND
+// SCK   | GPIO 18
+// MOSI  | GPIO 23
+// MISO  | GPIO 19
+// SDA   | GPIO 5
+// RST   | GPIO 2
+//
+// PINES USADOS: CS=5, RST=2, SCK=18, MOSI=23, MISO=19.
+// 
+// LIBRERÍAS: SPI.h, MFRC522.h
+//
+// NOTA IMPORTANTE:
+// El módulo RC522 opera a 3.3V. Conecte el pin VCC del módulo al pin 3.3V del ESP32.
+// =================================================================
+
+// 1. INCLUSIÓN DE LIBRERÍAS
+#include <SPI.h>       
+#include <MFRC522.h>   
+
+// 2. DEFINICIÓN DE PINES Y OBJETOS
+#define SS_PIN    5   // Chip Select (CS/SDA)
+#define RST_PIN   2   // Reset (RST) 
+
+// Creación de la instancia del módulo MFRC522
+MFRC522 rfid(SS_PIN, RST_PIN);
+
+// =================================================================
+// setup()
+// =================================================================
+void setup() {
+  // Inicialización de la comunicación Serial
+  Serial.begin(115200); 
+  
+  // Pausa de inicialización del sistema para asegurar la estabilidad del puerto serial
+  delay(2000); // Espera 2 segundos 
+  
+  Serial.println("--- Tutorial 12: RFID RC522 Lectura de UID ---");
+  
+  // Inicialización del bus SPI.
+  SPI.begin(); 
+  
+  // Inicialización del módulo MFRC522
+  rfid.PCD_Init(); 
+
+  // Verificación de conexión (Lectura del registro de versión del chip)
+  byte versionChip = rfid.PCD_ReadRegister(MFRC522::VersionReg);
+  Serial.print("Módulo RC522 DETECTADO. Versión del Chip: 0x");
+  Serial.println(versionChip, HEX);
+  
+  Serial.println("--------------------------------------------------");
+  Serial.println("Lector listo. Acerque una tarjeta o llavero al lector.");
+}
+
+// =================================================================
+// loop()
+// =================================================================
+void loop() {
+  // 1. Verificar si hay una nueva tarjeta presente
+  if (!rfid.PICC_IsNewCardPresent()) { 
+    return;
+  }
+  
+  // 2. Intentar leer el Identificador Único (UID)
+  if (!rfid.PICC_ReadCardSerial()) { 
+    return;
+  }
+  
+  // 3. Mostrar información de la tarjeta
+  
+  // Obtener el tipo de tarjeta (Mifare 1K, 4K, etc.)
+  MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
+  Serial.print("\nTipo de Etiqueta RFID/NFC: "); 
+  Serial.println(rfid.PICC_GetTypeName(piccType));
+
+  // Imprimir el UID en formato HEX
+  Serial.print("UID:");
+  for (int i = 0; i < rfid.uid.size; i++) {
+    // Asegura el formato de dos dígitos (ej: 0A)
+    Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " ");
+    Serial.print(rfid.uid.uidByte[i], HEX);
+  }
+  Serial.println();
+
+  // 4. Detener la comunicación con la tarjeta para permitir nuevas lecturas
+  rfid.PICC_HaltA();         // Detiene la tarjeta actual
+  rfid.PCD_StopCrypto1();    // Detiene la encriptación (si estaba activa)
+  
+  delay(500); 
+}
