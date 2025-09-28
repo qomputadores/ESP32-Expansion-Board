@@ -1,0 +1,141 @@
+// =================================================================
+// Iwan
+// TUTORIAL 16: MONITOR DE TEMPERATURA DS18B20 Y LCD I2C
+// -----------------------------------------------------------------
+// OBJETIVO: Leer la temperatura del sensor digital DS18B20 y 
+//           mostrarla en grados Celsius y Fahrenheit en una pantalla 
+//           LCD 16x2 I2C.
+//
+// LIBRERÍAS REQUERIDAS: OneWire, DallasTemperature, LiquidCrystal_I2C
+//
+// CONEXIONES: 
+// - Sensor DS18B20 (Header 'DS') -> GPIO 4
+// - LCD I2C (SDA/SCL) -> GPIO 21/22
+// =================================================================
+
+// 1. INCLUSIÓN DE LIBRERÍAS
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+// 2. DEFINICIÓN DE PINES Y CONSTANTES
+const int ONE_WIRE_BUS = 4; // Pin GPIO para la comunicación OneWire
+const int LCD_ADDRESS = 0x27; // Dirección I2C (comprueba si necesitas 0x3F)
+
+// Configuración de la pantalla LCD I2C (16x2)
+LiquidCrystal_I2C lcd(LCD_ADDRESS, 16, 2); 
+
+// Configuración del Sensor DS18B20
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+
+// =================================================================
+// FUNCIÓN: Muestra mensajes de bienvenida en la LCD (Máx. 16 chars)
+// =================================================================
+void splashScreen() {
+    // Mensaje 1
+    lcd.clear();
+    lcd.print("Iniciando Monit."); 
+    lcd.setCursor(0, 1);
+    lcd.print("  Tutorial 16");     
+    delay(2000);
+
+    // Mensaje 2
+    lcd.clear();
+    lcd.print("Sensor DS18B20");  
+    lcd.setCursor(0, 1);
+    lcd.print("Listo en GPIO 4"); 
+    delay(2000);
+}
+
+// =================================================================
+// FUNCIÓN: Muestra la temperatura en la pantalla LCD
+// =================================================================
+void displayTemperature(float celsius, float fahrenheit) {
+  
+  // Símbolo de grados (carácter ASCII 0xDF)
+  const char degreeSymbol = 0xDF;
+
+  // --- Línea 1: Celsius ---
+  lcd.setCursor(0, 0); 
+  lcd.print("Temp C: ");
+  
+  // Limpia y escribe el valor (columnas 8 a 15)
+  lcd.setCursor(8, 0); 
+  lcd.print("        "); 
+  
+  lcd.setCursor(8, 0); 
+  lcd.print(celsius, 1); 
+  lcd.write((uint8_t)degreeSymbol); 
+  lcd.print("C");
+  
+  // --- Línea 2: Fahrenheit ---
+  lcd.setCursor(0, 1); 
+  lcd.print("Temp F: ");
+  
+  // Limpia y escribe el valor (columnas 8 a 15)
+  lcd.setCursor(8, 1); 
+  lcd.print("        "); 
+
+  lcd.setCursor(8, 1); 
+  lcd.print(fahrenheit, 1);
+  lcd.write((uint8_t)degreeSymbol); 
+  lcd.print("F");
+}
+
+// =================================================================
+// setup()
+// =================================================================
+void setup() {
+  Serial.begin(115200);
+
+  // Inicialización de la LCD
+  lcd.init();
+  lcd.backlight();
+
+  // Muestra los mensajes de inicio
+  splashScreen();
+
+  // Inicialización del Sensor DS18B20
+  sensors.begin();
+  Serial.println("DS18B20 y LCD I2C iniciados.");
+}
+
+// =================================================================
+// loop()
+// =================================================================
+void loop() {
+  // 1. Pedir al sensor que realice una lectura
+  sensors.requestTemperatures(); 
+
+  // 2. Obtener la temperatura
+  float tempC = sensors.getTempCByIndex(0); 
+  
+  // 3. Obtener la temperatura en Fahrenheit
+  float tempF = sensors.toFahrenheit(tempC); 
+
+  // 4. Comprobación de errores de lectura
+  if (tempC == DEVICE_DISCONNECTED_C) {
+    Serial.println("Error: No se pudo leer el sensor DS18B20!");
+    lcd.clear();
+    lcd.print("ERROR EN SENSOR!"); 
+    lcd.setCursor(0, 1);
+    lcd.print("Revise Conexiones");
+    delay(5000);
+    return;
+  }
+
+  // 5. Mostrar datos por el Monitor Serial
+  Serial.print("Temperatura: ");
+  Serial.print(tempC);
+  Serial.print(" C / ");
+  Serial.print(tempF);
+  Serial.println(" F");
+
+  // 6. Mostrar datos en la LCD
+  displayTemperature(tempC, tempF);
+
+  // Leer la temperatura cada 5 segundos
+  delay(5000); 
+}
