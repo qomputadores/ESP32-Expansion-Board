@@ -1,0 +1,66 @@
+// =================================================================
+// Iwan
+// 14: LECTOR DE CÓDIGOS IR (IR Sniffer)
+// -----------------------------------------------------------------
+// OBJETIVO: Obtener los códigos únicos (hexadecimales) de cada 
+//           botón de tu control remoto.
+//
+// LIBRERÍA A INSTALAR: IRremoteESP8266
+//
+// NOTA IMPORTANTE: Si tu control remoto es diferente al de la 
+//                  Board de expansión, DEBES ejecutar este programa 
+//                  y escanear tus propios códigos. Si tienes el 
+//                  mismo modelo, puedes usar la tabla de códigos HEX 
+//                  ya verificada en la descripción de este tutorial.
+//
+// CONEXIÓN CLAVE: Receptor IR (Pin 'IR' en la Board) -> GPIO 26
+//
+// LIBRERÍAS INCLUIDAS: IRrecv.h, IRutils.h (Parte de IRremoteESP8266)
+// =================================================================
+
+#include <IRrecv.h>
+#include <IRutils.h>
+
+// 1. Definición del pin al que está conectado el receptor IR
+const int RECV_PIN = 26; 
+
+// 2. Inicializa el objeto para recibir datos IR
+IRrecv irrecv(RECV_PIN);
+
+// 3. Objeto para almacenar el código decodificado
+decode_results results;
+
+void setup() {
+  Serial.begin(115200);
+  delay(2000); 
+
+  // Habilita la recepción de señales IR
+  irrecv.enableIRIn(); 
+
+  Serial.println("--- Tutorial 14: Lector de Codigos IR (IR Sniffer) ---");
+  Serial.println("Receptor IR activo. Apunta tu control remoto y presiona un boton.");
+  Serial.println("-----------------------------------------------------------------");
+}
+
+void loop() {
+  // 1. Comprueba si se recibió una señal IR
+  if (irrecv.decode(&results)) {
+    
+    // 2. Filtra el código 0xFFFFFFFF (Repetición)
+    if (results.value == 0xFFFFFFFF) {
+        irrecv.resume(); 
+        return;
+    }
+    
+    // 3. Imprime la información clave
+    Serial.print("Protocolo: ");
+    Serial.print(resultToHumanReadableBasic(&results)); 
+    
+    Serial.print(", Codigo HEX: ");
+    Serial.print(results.value, HEX);
+    Serial.println();
+    
+    // 4. Reinicia la recepción para capturar el siguiente código
+    irrecv.resume(); 
+  }
+}
