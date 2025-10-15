@@ -1,0 +1,143 @@
+// =================================================================
+// Iwan
+// 17: Pantalla OLED I2C (SSD1306/SSD1315) con Rotación
+// Aprendizaje: Uso de librerías Adafruit GFX/SSD1306 e implementación de lógica no bloqueante (millis) para la visualización dinámica.
+// Pines usados: I2C (GPIO21 - SDA, GPIO22 - SCL)
+//
+// Conexión de hardware:
+// Conecta el módulo OLED 0.96" I2C (VCC a 3.3V, GND a GND, SDA a GPIO21 y SCL a GPIO22).
+//
+// Descripción:
+// Este programa inicializa la pantalla OLED. Muestra un título estático 
+// ("ESP32 MONITOR") en dos líneas y rotará cíclicamente cuatro mensajes de 
+// estado diferentes en el área inferior cada 2.5 segundos, usando millis()
+// para evitar el bloqueo del bucle principal.
+// =================================================================
+
+// 1. INCLUSIÓN DE LIBRERÍAS
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+// 2. DEFINICIÓN DE CONSTANTES DE LA PANTALLA
+#define SCREEN_WIDTH 128    // Ancho en píxeles
+#define SCREEN_HEIGHT 64    // Alto en píxeles
+#define SCREEN_ADDRESS 0x3C // Dirección I2C común (revisar si es 0x3D)
+#define OLED_RESET -1       // Pin de Reset para I2C
+
+// Creamos el objeto de la pantalla
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// 3. VARIABLES DE CONTROL DE ROTACIÓN
+int rotationState = 0; // Estado actual (0-3) para la rotación
+const int ROTATION_INTERVAL_MS = 2500; // Rotar cada 2.5 segundos
+unsigned long previousRotationTime = 0;
+
+
+// =================================================================
+// FUNCIONES DE UTILIDAD DE DISPLAY
+// =================================================================
+
+// Calcula la posición X para centrar texto de tamaño 1
+int getCenteredX(const char* message) {
+    int len = strlen(message);
+    // Tamaño 1 = 6 píxeles de ancho por caracter
+    return (SCREEN_WIDTH - (len * 6)) / 2; 
+}
+
+// Dibuja el título "ESP32 MONITOR" en dos líneas, centrado y grande.
+void drawTitle() {
+    // 1. Limpiar el área del título (primeras 32 filas)
+    display.fillRect(0, 0, SCREEN_WIDTH, 32, SSD1306_BLACK); 
+
+    display.setTextSize(2); // Tamaño 2 (12 píxeles de alto)
+    
+    // Línea 1: "ESP32"
+    const char* line1 = "ESP32"; 
+    int cursorX1 = (SCREEN_WIDTH - (strlen(line1) * 12)) / 2; 
+    display.setCursor(cursorX1, 0); 
+    display.println(line1);
+
+    // Línea 2: "MONITOR"
+    const char* line2 = "MONITOR"; 
+    int cursorX2 = (SCREEN_WIDTH - (strlen(line2) * 12)) / 2; 
+    display.setCursor(cursorX2, 16); // Posición Y = 16 (Debajo de la línea 1)
+    display.println(line2);
+}
+
+// Gestiona el ciclo de rotación de mensajes en el área inferior (NO BLOQUEANTE)
+void rotateInfo() {
+    // Mensajes a rotar
+    const char* messages[] = {
+        "PROTOCOLO: I2C",
+        "ESTADO: LISTO",
+        "TUTORIAL #17",
+        "CREADOR: Iwan"
+    };
+
+    const char* currentMessage = messages[rotationState];
+
+    // Limpiar el área de rotación (área inferior)
+    display.fillRect(0, 48, SCREEN_WIDTH, 16, SSD1306_BLACK); 
+
+    // Configurar y dibujar el texto de rotación
+    display.setTextSize(1);
+    int cursorX = getCenteredX(currentMessage); 
+
+    display.setCursor(cursorX, 50); // Posición Y = 50
+    display.setTextColor(SSD1306_WHITE);
+    display.println(currentMessage);
+
+    // Enviar el búfer a la pantalla
+    display.display();
+
+    // Avanzar el estado de rotación
+    rotationState = (rotationState + 1) % 4; // Ciclo 0, 1, 2, 3
+}
+
+
+// =================================================================
+// setup()
+// =================================================================
+// Esta función se ejecuta una sola vez cuando el ESP32 se enciende o se reinicia.
+void setup() {
+    Serial.begin(115200);
+
+    // Inicializar la pantalla. Chequea si el módulo responde.
+    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+        Serial.println(F("Error: No se encontró la pantalla OLED."));
+        // Bucle infinito si hay error
+        for (;;); 
+    }
+
+    // Configuración inicial de texto
+    display.clearDisplay();
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(1);              
+
+    // Mensaje de bienvenida (Splash Screen)
+    display.setCursor(0, 0);
+    display.println("--- INICIANDO ---");
+    display.println("Tutorial 17 OLED");
+    display.display(); 
+    delay(3000); // Pausa de 3 segundos
+}
+
+// =================================================================
+// loop()
+// =================================================================
+// Esta función se ejecuta de forma repetida e infinita.
+void loop() {
+    
+    unsigned long currentMillis = millis();
+
+    // Dibuja el título estático "ESP32 MONITOR"
+    drawTitle();
+
+    // --- Rotación de Mensajes (Gestión No Bloqueante) ---
+    // Solo actualiza si ha pasado el intervalo de 2.5 segundos
+    if (currentMillis - previousRotationTime >= ROTATION_INTERVAL_MS) {
+        previousRotationTime = currentMillis;
+        rotateInfo();
+    }
+}
